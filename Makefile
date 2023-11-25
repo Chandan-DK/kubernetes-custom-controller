@@ -5,6 +5,7 @@
 TOOLS_DIR                          := $(PWD)/.tools
 DEEPCOPY_GEN                       := $(TOOLS_DIR)/deepcopy-gen
 REGISTER_GEN                       := $(TOOLS_DIR)/register-gen
+CLIENT_GEN                         := $(TOOLS_DIR)/client-gen
 CODE_GEN_VERSION                   := v0.28.0
 
 $(DEEPCOPY_GEN):
@@ -14,6 +15,10 @@ $(DEEPCOPY_GEN):
 $(REGISTER_GEN):
 	@echo Install register-gen... 
 	@GOBIN=$(TOOLS_DIR) go install k8s.io/code-generator/cmd/register-gen@$(CODE_GEN_VERSION)
+
+$(CLIENT_GEN):
+	@echo Install client-gen... >&2
+	@GOBIN=$(TOOLS_DIR) go install k8s.io/code-generator/cmd/client-gen@$(CODE_GEN_VERSION)
 
 install-tools: $(DEEPCOPY_GEN)
 	@echo "All tools installed successfully."
@@ -60,3 +65,13 @@ codegen-register: $(PACKAGE_SHIM) $(REGISTER_GEN) ## Generate types registration
 	@GOPATH=$(GOPATH_SHIM) $(REGISTER_GEN) \
 		--go-header-file=./scripts/boilerplate.go.txt \
 		--input-dirs=$(INPUT_DIRS)
+
+.PHONY: codegen-client-clientset
+codegen-client-clientset: $(PACKAGE_SHIM) $(CLIENT_GEN) ## Generate clientset
+	@echo Generate clientset... >&2
+	@GOPATH=$(GOPATH_SHIM) $(CLIENT_GEN) \
+		--go-header-file ./scripts/boilerplate.go.txt \
+		--clientset-name versioned \
+		--output-package $(CLIENTSET_PACKAGE) \
+		--input-base "" \
+		--input $(INPUT_DIRS)
