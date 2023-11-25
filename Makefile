@@ -33,7 +33,7 @@ clean-tools:
 PACKAGE                     := github.com/Chandan-DK/kubernetes-custom-controller
 GOPATH_SHIM                 := ${PWD}/.gopath
 PACKAGE_SHIM                := $(GOPATH_SHIM)/src/$(PACKAGE)
-OUT_PACKAGE                 := $(PACKAGE)/pkg/client
+OUT_PACKAGE                 := $(PACKAGE)/pkg/generated/client
 INPUT_DIRS                  := $(PACKAGE)/api/mygroup/v1alpha1
 CLIENTSET_PACKAGE           := $(OUT_PACKAGE)/clientset
 
