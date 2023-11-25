@@ -7,6 +7,7 @@ DEEPCOPY_GEN                       := $(TOOLS_DIR)/deepcopy-gen
 REGISTER_GEN                       := $(TOOLS_DIR)/register-gen
 CLIENT_GEN                         := $(TOOLS_DIR)/client-gen
 LISTER_GEN                         := $(TOOLS_DIR)/lister-gen
+INFORMER_GEN                       := $(TOOLS_DIR)/informer-gen
 CODE_GEN_VERSION                   := v0.28.0
 
 $(DEEPCOPY_GEN):
@@ -24,6 +25,10 @@ $(CLIENT_GEN):
 $(LISTER_GEN):
 	@echo Install lister-gen... >&2
 	@GOBIN=$(TOOLS_DIR) go install k8s.io/code-generator/cmd/lister-gen@$(CODE_GEN_VERSION)
+
+$(INFORMER_GEN):
+	@echo Install informer-gen... >&2
+	@GOBIN=$(TOOLS_DIR) go install k8s.io/code-generator/cmd/informer-gen@$(CODE_GEN_VERSION)
 
 install-tools: $(DEEPCOPY_GEN)
 	@echo "All tools installed successfully."
@@ -47,6 +52,7 @@ OUT_PACKAGE                 := $(PACKAGE)/pkg/generated/client
 INPUT_DIRS                  := $(PACKAGE)/api/mygroup/v1alpha1
 CLIENTSET_PACKAGE           := $(OUT_PACKAGE)/clientset
 LISTERS_PACKAGE             := $(OUT_PACKAGE)/listers
+INFORMERS_PACKAGE           := $(OUT_PACKAGE)/informers
 
 $(GOPATH_SHIM):
 	@echo Create gopath shim... 
@@ -89,3 +95,13 @@ codegen-client-listers: $(PACKAGE_SHIM) $(LISTER_GEN) ## Generate listers
 		--go-header-file ./scripts/boilerplate.go.txt \
 		--output-package $(LISTERS_PACKAGE) \
 		--input-dirs $(INPUT_DIRS)
+
+.PHONY: codegen-client-informers
+codegen-client-informers: $(PACKAGE_SHIM) $(INFORMER_GEN) ## Generate informers
+	@echo Generate informers... >&2
+	@GOPATH=$(GOPATH_SHIM) $(INFORMER_GEN) \
+		--go-header-file ./scripts/boilerplate.go.txt \
+		--output-package $(INFORMERS_PACKAGE) \
+		--input-dirs $(INPUT_DIRS) \
+		--versioned-clientset-package $(CLIENTSET_PACKAGE)/versioned \
+		--listers-package $(LISTERS_PACKAGE)
