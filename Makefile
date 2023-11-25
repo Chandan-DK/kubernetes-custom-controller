@@ -6,6 +6,7 @@ TOOLS_DIR                          := $(PWD)/.tools
 DEEPCOPY_GEN                       := $(TOOLS_DIR)/deepcopy-gen
 REGISTER_GEN                       := $(TOOLS_DIR)/register-gen
 CLIENT_GEN                         := $(TOOLS_DIR)/client-gen
+LISTER_GEN                         := $(TOOLS_DIR)/lister-gen
 CODE_GEN_VERSION                   := v0.28.0
 
 $(DEEPCOPY_GEN):
@@ -19,6 +20,10 @@ $(REGISTER_GEN):
 $(CLIENT_GEN):
 	@echo Install client-gen... >&2
 	@GOBIN=$(TOOLS_DIR) go install k8s.io/code-generator/cmd/client-gen@$(CODE_GEN_VERSION)
+
+$(LISTER_GEN):
+	@echo Install lister-gen... >&2
+	@GOBIN=$(TOOLS_DIR) go install k8s.io/code-generator/cmd/lister-gen@$(CODE_GEN_VERSION)
 
 install-tools: $(DEEPCOPY_GEN)
 	@echo "All tools installed successfully."
@@ -41,6 +46,7 @@ PACKAGE_SHIM                := $(GOPATH_SHIM)/src/$(PACKAGE)
 OUT_PACKAGE                 := $(PACKAGE)/pkg/generated/client
 INPUT_DIRS                  := $(PACKAGE)/api/mygroup/v1alpha1
 CLIENTSET_PACKAGE           := $(OUT_PACKAGE)/clientset
+LISTERS_PACKAGE             := $(OUT_PACKAGE)/listers
 
 $(GOPATH_SHIM):
 	@echo Create gopath shim... 
@@ -75,3 +81,11 @@ codegen-client-clientset: $(PACKAGE_SHIM) $(CLIENT_GEN) ## Generate clientset
 		--output-package $(CLIENTSET_PACKAGE) \
 		--input-base "" \
 		--input $(INPUT_DIRS)
+
+.PHONY: codegen-client-listers
+codegen-client-listers: $(PACKAGE_SHIM) $(LISTER_GEN) ## Generate listers
+	@echo Generate listers... >&2
+	@GOPATH=$(GOPATH_SHIM) $(LISTER_GEN) \
+		--go-header-file ./scripts/boilerplate.go.txt \
+		--output-package $(LISTERS_PACKAGE) \
+		--input-dirs $(INPUT_DIRS)
