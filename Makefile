@@ -9,6 +9,8 @@ CLIENT_GEN                         := $(TOOLS_DIR)/client-gen
 LISTER_GEN                         := $(TOOLS_DIR)/lister-gen
 INFORMER_GEN                       := $(TOOLS_DIR)/informer-gen
 CODE_GEN_VERSION                   := v0.28.0
+CONTROLLER_GEN                     := $(TOOLS_DIR)/controller-gen
+CONTROLLER_GEN_VERSION             := v0.12.0
 
 $(DEEPCOPY_GEN):
 	@echo Install deepcopy-gen... 
@@ -19,16 +21,20 @@ $(REGISTER_GEN):
 	@GOBIN=$(TOOLS_DIR) go install k8s.io/code-generator/cmd/register-gen@$(CODE_GEN_VERSION)
 
 $(CLIENT_GEN):
-	@echo Install client-gen... >&2
+	@echo Install client-gen... 
 	@GOBIN=$(TOOLS_DIR) go install k8s.io/code-generator/cmd/client-gen@$(CODE_GEN_VERSION)
 
 $(LISTER_GEN):
-	@echo Install lister-gen... >&2
+	@echo Install lister-gen...
 	@GOBIN=$(TOOLS_DIR) go install k8s.io/code-generator/cmd/lister-gen@$(CODE_GEN_VERSION)
 
 $(INFORMER_GEN):
-	@echo Install informer-gen... >&2
+	@echo Install informer-gen...
 	@GOBIN=$(TOOLS_DIR) go install k8s.io/code-generator/cmd/informer-gen@$(CODE_GEN_VERSION)
+
+$(CONTROLLER_GEN):
+	@echo Install controller-gen...
+	@GOBIN=$(TOOLS_DIR) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_GEN_VERSION)
 
 install-tools: $(DEEPCOPY_GEN)
 	@echo "All tools installed successfully."
@@ -53,6 +59,7 @@ INPUT_DIRS                  := $(PACKAGE)/api/mygroup/v1alpha1
 CLIENTSET_PACKAGE           := $(OUT_PACKAGE)/clientset
 LISTERS_PACKAGE             := $(OUT_PACKAGE)/listers
 INFORMERS_PACKAGE           := $(OUT_PACKAGE)/informers
+CRDS_PATH                   := ${PWD}/config/crds/generated
 
 $(GOPATH_SHIM):
 	@echo Create gopath shim... 
@@ -73,14 +80,14 @@ codegen-deepcopy: $(PACKAGE_SHIM) $(DEEPCOPY_GEN) ## Generate deep copy function
 
 .PHONY: codegen-register
 codegen-register: $(PACKAGE_SHIM) $(REGISTER_GEN) ## Generate types registrations
-	@echo Generate registration... >&2
+	@echo Generate registration... 
 	@GOPATH=$(GOPATH_SHIM) $(REGISTER_GEN) \
 		--go-header-file=./scripts/boilerplate.go.txt \
 		--input-dirs=$(INPUT_DIRS)
 
 .PHONY: codegen-client-clientset
 codegen-client-clientset: $(PACKAGE_SHIM) $(CLIENT_GEN) ## Generate clientset
-	@echo Generate clientset... >&2
+	@echo Generate clientset... 
 	@GOPATH=$(GOPATH_SHIM) $(CLIENT_GEN) \
 		--go-header-file ./scripts/boilerplate.go.txt \
 		--clientset-name versioned \
@@ -90,7 +97,7 @@ codegen-client-clientset: $(PACKAGE_SHIM) $(CLIENT_GEN) ## Generate clientset
 
 .PHONY: codegen-client-listers
 codegen-client-listers: $(PACKAGE_SHIM) $(LISTER_GEN) ## Generate listers
-	@echo Generate listers... >&2
+	@echo Generate listers... 
 	@GOPATH=$(GOPATH_SHIM) $(LISTER_GEN) \
 		--go-header-file ./scripts/boilerplate.go.txt \
 		--output-package $(LISTERS_PACKAGE) \
@@ -98,10 +105,15 @@ codegen-client-listers: $(PACKAGE_SHIM) $(LISTER_GEN) ## Generate listers
 
 .PHONY: codegen-client-informers
 codegen-client-informers: $(PACKAGE_SHIM) $(INFORMER_GEN) ## Generate informers
-	@echo Generate informers... >&2
+	@echo Generate informers... 
 	@GOPATH=$(GOPATH_SHIM) $(INFORMER_GEN) \
 		--go-header-file ./scripts/boilerplate.go.txt \
 		--output-package $(INFORMERS_PACKAGE) \
 		--input-dirs $(INPUT_DIRS) \
 		--versioned-clientset-package $(CLIENTSET_PACKAGE)/versioned \
 		--listers-package $(LISTERS_PACKAGE)
+
+.PHONY: codegen-crds-mygroup
+codegen-crds-mygroup: $(CONTROLLER_GEN) ## Generate CRDs
+	@echo Generate mygroup crds... 
+	@$(CONTROLLER_GEN) crd paths=./api/mygroup/... crd:crdVersions=v1 output:dir=$(CRDS_PATH)
