@@ -117,3 +117,5 @@ codegen-client-informers: $(PACKAGE_SHIM) $(INFORMER_GEN) ## Generate informers
 codegen-crds-mygroup: $(CONTROLLER_GEN) ## Generate CRDs
 	@echo Generate mygroup crds... 
 	@$(CONTROLLER_GEN) crd paths=./api/mygroup/... crd:crdVersions=v1 output:dir=$(CRDS_PATH)
+
+codegen-all: codegen-deepcopy codegen-register codegen-client-clientset codegen-client-listers codegen-client-informers codegen-crds-mygroup
