@@ -31,7 +31,7 @@ type MygroupV1alpha1Interface interface {
 	PodCreatorsGetter
 }
 
-// MygroupV1alpha1Client is used to interact with features provided by the mygroup group.
+// MygroupV1alpha1Client is used to interact with features provided by the mygroup.domain group.
 type MygroupV1alpha1Client struct {
 	restClient rest.Interface
 }
